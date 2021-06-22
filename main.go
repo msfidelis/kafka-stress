@@ -16,7 +16,7 @@ import (
 
 func main() {
 	topic := flag.String("topic", "kafka-stress", "Kafka Stress Topics")
-	createTopic := flag.String("create-topic", "false", "Auto Create Topic?")
+	createTopic := flag.Bool("create-topic", false, "Auto Create Topic?")
 	testMode := flag.String("test-mode", "producer", "Test Type; Ex producer;consumer. Default: producer")
 	bootstrapServers := flag.String("bootstrap-servers", "0.0.0.0:9092", "Kafka Bootstrap Servers Broker Lists")
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
@@ -24,12 +24,9 @@ func main() {
 
 	flag.Parse()
 
-	fmt.Println(*events)
-	fmt.Println(*topic)
-	fmt.Println(*testMode)
-	fmt.Println(*createTopic)
-	fmt.Println(*bootstrapServers)
-	fmt.Println(*zookeeperServers)
+	if *createTopic {
+		createTopicAfterTest(*topic, *zookeeperServers)
+	}
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
@@ -52,6 +49,8 @@ func produce(bootstrap_servers string, topic string, events int) {
 
 	var executions uint64
 	var errors uint64
+
+	start := time.Now()
 
 	for i := 0; i < events; i++ {
 		wg.Add(1)
@@ -77,11 +76,18 @@ func produce(bootstrap_servers string, topic string, events int) {
 	}
 
 	wg.Wait()
+	elapsed := time.Since(start)
+	meanEventsSent := float64(executions) / elapsed.Seconds()
 	fmt.Printf("Sent %v messages to topic %s with %v errors \n", executions, topic, errors)
+	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
 func consume() {
 
+}
+
+func createTopicAfterTest(topic string, zookeeper string) {
+	fmt.Printf("Creating topic %s\n", topic)
 }
 
 func getProducer(bootstrap_servers, topic string) *kafka.Writer {
