@@ -1,4 +1,22 @@
 
+## v0 Usage 
+
+```bash
+Usage of ./main:
+  -bootstrap-servers string
+    	Kafka Bootstrap Servers Broker Lists (default "0.0.0.0:9092")
+  -create-topic
+    	Auto Create Topic?
+  -events int
+    	Numer of events will be created in topic (default 10000)
+  -test-mode string
+    	Test Type; Ex producer;consumer. Default: producer (default "producer")
+  -topic string
+    	Kafka Stress Topics (default "kafka-stress")
+  -zookeeper-servers string
+    	Zookeeper Connection String (default "0.0.0.0:2181")
+```
+
 ## Tests
 1. Setup local stack 
 
