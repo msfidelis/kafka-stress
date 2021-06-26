@@ -1,0 +1,26 @@
+release:
+  prerelease: false
+
+builds:
+  - binary: kafka-stress
+    env:
+      - TOP=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+
+# brews:
+#   - github:
+#       owner: msfidelis
+#       name: homebrew-kafka-stress
+#     homepage: "https://github.com/msfidelis/kafka-stress/"
+#     description: "Kafka Producer / Consumer Stress Test Tool"
+
+archives:
+  - format: binary
+    format_overrides:
+      - goos: windows
+        format: zip
