@@ -60,3 +60,5 @@ Tests finished in 1.232463918s. Producer mean time 8113.83/s
 * Add time based tests
 * Add goreleaser pipeline 
 * Add Docker image build
+* Add Message Size Test 
+* Add Schema Registry / AVRO, JSON, PROTO Support
