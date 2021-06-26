@@ -35,6 +35,13 @@ func main() {
 		produce(*bootstrapServers, *topic, *events)
 		break
 	case "consumer":
+
+		for i := 0; i < *consumers; i++ {
+			var consumerId = i + 1
+			go consume(*bootstrapServers, *topic, *consumerGroup, consumerId)
+		}
+
+
 		consume(*bootstrapServers, *topic, *consumerGroup, *consumers)
 		break
 	default:
@@ -84,36 +91,36 @@ func produce(bootstrap_servers string, topic string, events int) {
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(bootstrap_servers, topic, consumer_group string, consumers int) {
+func consume(bootstrap_servers, topic, consumer_group string, consumerId int) {
 
-	var wg sync.WaitGroup
+	// var wg sync.WaitGroup
 
-	for i := 0; i < consumers; i++ {
-		fmt.Println(i)
-		consumerId := i + 1
-		consumer := getConsumer(bootstrap_servers, topic, consumer_group, consumerId)
-		wg.Add(1)
-		go func() {
-			for {
-				m, err := consumer.ReadMessage(context.Background())
-				if err != nil {
-					break
-				}
-				fmt.Printf("[Client %v] message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerId, consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
-			}
-			wg.Done()
-		}()
-	}
-
-	// consumer := getConsumer(bootstrap_servers, topic, consumer_group)
-
-	// for {
-	// 	m, err := consumer.ReadMessage(context.Background())
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	fmt.Printf("message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+	// for i := 0; i < consumers; i++ {
+	// 	fmt.Println(i)
+	// 	consumerId := i + 1
+	// 	consumer := getConsumer(bootstrap_servers, topic, consumer_group, consumerId)
+	// 	wg.Add(1)
+	// 	go func() {
+	// 		for {
+	// 			m, err := consumer.ReadMessage(context.Background())
+	// 			if err != nil {
+	// 				break
+	// 			}
+	// 			fmt.Printf("[Client %v] message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerId, consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+	// 		}
+	// 		wg.Done()
+	// 	}()
 	// }
+
+	consumer := getConsumer(bootstrap_servers, topic, consumer_group, consumerId)
+
+	for {
+		m, err := consumer.ReadMessage(context.Background())
+		if err != nil {
+			break
+		}
+		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerId, consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+	}
 
 	fmt.Println("Consumer")
 }
