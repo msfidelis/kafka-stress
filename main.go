@@ -21,6 +21,8 @@ func main() {
 	bootstrapServers := flag.String("bootstrap-servers", "0.0.0.0:9092", "Kafka Bootstrap Servers Broker Lists")
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
+	consumers := flag.Int("consumers", 1, "Number of consumers will be used in topic")
+	consumerGroup := flag.String("consumer-group", "kafka-stress", "Consumer group name")
 
 	flag.Parse()
 
@@ -33,7 +35,14 @@ func main() {
 		produce(*bootstrapServers, *topic, *events)
 		break
 	case "consumer":
-		consume()
+
+		for i := 0; i < *consumers; i++ {
+			var consumerId = i + 1
+			go consume(*bootstrapServers, *topic, *consumerGroup, consumerId)
+		}
+
+
+		consume(*bootstrapServers, *topic, *consumerGroup, *consumers)
 		break
 	default:
 		return
@@ -82,8 +91,38 @@ func produce(bootstrap_servers string, topic string, events int) {
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume() {
+func consume(bootstrap_servers, topic, consumer_group string, consumerId int) {
 
+	// var wg sync.WaitGroup
+
+	// for i := 0; i < consumers; i++ {
+	// 	fmt.Println(i)
+	// 	consumerId := i + 1
+	// 	consumer := getConsumer(bootstrap_servers, topic, consumer_group, consumerId)
+	// 	wg.Add(1)
+	// 	go func() {
+	// 		for {
+	// 			m, err := consumer.ReadMessage(context.Background())
+	// 			if err != nil {
+	// 				break
+	// 			}
+	// 			fmt.Printf("[Client %v] message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerId, consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+	// 		}
+	// 		wg.Done()
+	// 	}()
+	// }
+
+	consumer := getConsumer(bootstrap_servers, topic, consumer_group, consumerId)
+
+	for {
+		m, err := consumer.ReadMessage(context.Background())
+		if err != nil {
+			break
+		}
+		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerId, consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+	}
+
+	fmt.Println("Consumer")
 }
 
 func createTopicAfterTest(topic string, zookeeper string) {
@@ -112,6 +151,24 @@ func getProducer(bootstrap_servers, topic string) *kafka.Writer {
 		Dialer:       dialer,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
+	})
+
+}
+
+func getConsumer(bootstrap_servers, topic, consumer_group string, consumer int) *kafka.Reader {
+
+	// @TODO Separar um dialer
+	dialer := &kafka.Dialer{
+		Timeout:   10 * time.Second,
+		DualStack: true,
+		ClientID:  fmt.Sprintf("%v-%v", consumer_group, consumer),
+	}
+
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers: strings.Split(bootstrap_servers, ","),
+		Topic:   topic,
+		GroupID: consumer_group,
+		Dialer:  dialer,
 	})
 
 }

@@ -54,9 +54,12 @@ Tests finished in 1.232463918s. Producer mean time 8113.83/s
 * Add logs
 * Add SCRAM authentication 
 * Add SASL authetication 
+* Add TLS authetication 
 * Add IAM authentication for Amazon MSK 
 * Add Unit Tests
 * Add consume tests 
 * Add time based tests
 * Add goreleaser pipeline 
 * Add Docker image build
+* Add Message Size Test 
+* Add Schema Registry / AVRO, JSON, PROTO Support
