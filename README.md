@@ -54,6 +54,7 @@ Tests finished in 1.232463918s. Producer mean time 8113.83/s
 * Add logs
 * Add SCRAM authentication 
 * Add SASL authetication 
+* Add TLS authetication 
 * Add IAM authentication for Amazon MSK 
 * Add Unit Tests
 * Add consume tests 
