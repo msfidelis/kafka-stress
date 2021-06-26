@@ -37,8 +37,8 @@ func main() {
 	case "consumer":
 
 		for i := 0; i < *consumers; i++ {
-			var consumerId = i + 1
-			go consume(*bootstrapServers, *topic, *consumerGroup, consumerId)
+			var consumerID = i + 1
+			go consume(*bootstrapServers, *topic, *consumerGroup, consumerID)
 		}
 
 
@@ -49,8 +49,8 @@ func main() {
 	}
 }
 
-func produce(bootstrap_servers string, topic string, events int) {
-	producer := getProducer(bootstrap_servers, topic)
+func produce(bootstrapServers string, topic string, events int) {
+	producer := getProducer(bootstrapServers, topic)
 
 	defer producer.Close()
 
@@ -91,45 +91,25 @@ func produce(bootstrap_servers string, topic string, events int) {
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(bootstrap_servers, topic, consumer_group string, consumerId int) {
-
-	// var wg sync.WaitGroup
-
-	// for i := 0; i < consumers; i++ {
-	// 	fmt.Println(i)
-	// 	consumerId := i + 1
-	// 	consumer := getConsumer(bootstrap_servers, topic, consumer_group, consumerId)
-	// 	wg.Add(1)
-	// 	go func() {
-	// 		for {
-	// 			m, err := consumer.ReadMessage(context.Background())
-	// 			if err != nil {
-	// 				break
-	// 			}
-	// 			fmt.Printf("[Client %v] message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerId, consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
-	// 		}
-	// 		wg.Done()
-	// 	}()
-	// }
-
-	consumer := getConsumer(bootstrap_servers, topic, consumer_group, consumerId)
+func consume(bootstrapServers, topic, consumerGroup string, consumerID int) {
+	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID)
 
 	for {
 		m, err := consumer.ReadMessage(context.Background())
 		if err != nil {
 			break
 		}
-		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerId, consumer_group, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerID, consumerGroup, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
 	}
 
-	fmt.Println("Consumer")
+	fmt.Println("Consumer", consumerID)
 }
 
 func createTopicAfterTest(topic string, zookeeper string) {
 	fmt.Printf("Creating topic %s\n", topic)
 }
 
-func getProducer(bootstrap_servers, topic string) *kafka.Writer {
+func getProducer(bootstrapServers, topic string) *kafka.Writer {
 
 	name, err := os.Hostname()
 
@@ -144,7 +124,7 @@ func getProducer(bootstrap_servers, topic string) *kafka.Writer {
 	}
 
 	return kafka.NewWriter(kafka.WriterConfig{
-		Brokers: strings.Split(bootstrap_servers, ","),
+		Brokers: strings.Split(bootstrapServers, ","),
 		Topic:   topic,
 		// Balancer: &kafka.LeastBytes{},
 		Balancer:     &kafka.Hash{},
@@ -155,19 +135,19 @@ func getProducer(bootstrap_servers, topic string) *kafka.Writer {
 
 }
 
-func getConsumer(bootstrap_servers, topic, consumer_group string, consumer int) *kafka.Reader {
+func getConsumer(bootstrapServers, topic, consumerGroup string, consumer int) *kafka.Reader {
 
 	// @TODO Separar um dialer
 	dialer := &kafka.Dialer{
 		Timeout:   10 * time.Second,
 		DualStack: true,
-		ClientID:  fmt.Sprintf("%v-%v", consumer_group, consumer),
+		ClientID:  fmt.Sprintf("%v-%v", consumerGroup, consumer),
 	}
 
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: strings.Split(bootstrap_servers, ","),
+		Brokers: strings.Split(bootstrapServers, ","),
 		Topic:   topic,
-		GroupID: consumer_group,
+		GroupID: consumerGroup,
 		Dialer:  dialer,
 	})
 
