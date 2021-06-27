@@ -47,7 +47,7 @@ Tests finished in 1.232463918s. Producer mean time 8113.83/s
 ## Roadmap 
 
 * Improve reports output
-* Add execution time on reports 
+* Add execution time on reports - :check: 
 * Add retry mechanism 
 * Add message size options
 * Add test header
@@ -57,7 +57,7 @@ Tests finished in 1.232463918s. Producer mean time 8113.83/s
 * Add TLS authetication 
 * Add IAM authentication for Amazon MSK 
 * Add Unit Tests
-* Add consume tests 
+* Add consume tests - :check: 
 * Add time based tests
 * Add goreleaser pipeline 
 * Add Docker image build
