@@ -20,6 +20,8 @@ func main() {
 	testMode := flag.String("test-mode", "producer", "Test Type; Ex producer;consumer. Default: producer")
 	bootstrapServers := flag.String("bootstrap-servers", "0.0.0.0:9092", "Kafka Bootstrap Servers Broker Lists")
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
+	schemaRegistryUrl := flag.String("schema-registry", "0.0.0.0:8081", "Schema Registry URL")
+	schema := flag.String("schema", "", "Schema")
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
 	consumers := flag.Int("consumers", 1, "Number of consumers will be used in topic")
 	consumerGroup := flag.String("consumer-group", "kafka-stress", "Consumer group name")
@@ -32,7 +34,7 @@ func main() {
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events)
+		produce(*bootstrapServers, *topic, *events, *schemaRegistryUrl, *schema)
 		break
 	case "consumer":
 
@@ -49,7 +51,7 @@ func main() {
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int) {
+func produce(bootstrapServers string, topic string, events int, schemaRegistryUrl string, schema string) {
 	producer := getProducer(bootstrapServers, topic)
 
 	defer producer.Close()
@@ -91,7 +93,7 @@ func produce(bootstrapServers string, topic string, events int) {
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(bootstrapServers, topic, consumerGroup string, consumerID int) {
+func consume(bootstrapServers, topic, consumerGroup string, consumerID int) {	
 	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID)
 
 	for {
