@@ -31,7 +31,7 @@ curl -X GET http://0.0.0.0:8081/subjects
 Create and Schema in AVRO format 
 
 ```
-curl http://0.0.0.0:8081/subjects/supis/versions -X POST \
+curl http://0.0.0.0:8081/subjects/example/versions -X POST \
 -H "Content-Type: application/vnd.schemaregistry.v1+json" \
 -d '
 {
