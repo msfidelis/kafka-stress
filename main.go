@@ -43,7 +43,6 @@ func main() {
 			go consume(*bootstrapServers, *topic, *consumerGroup, consumerID)
 		}
 
-
 		consume(*bootstrapServers, *topic, *consumerGroup, *consumers)
 		break
 	default:
@@ -93,7 +92,7 @@ func produce(bootstrapServers string, topic string, events int, schemaRegistryUr
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(bootstrapServers, topic, consumerGroup string, consumerID int) {	
+func consume(bootstrapServers, topic, consumerGroup string, consumerID int) {
 	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID)
 
 	for {
