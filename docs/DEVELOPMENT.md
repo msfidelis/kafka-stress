@@ -1,3 +1,18 @@
+# Setup local environment 
+
+### Setup Development Dependencies with Docker 
+
+```bash
+docker-compose up --force-recreate
+```
+
+### Create a test topic 
+
+
+```bash
+docker-compose exec broker  kafka-topics --create --topic kafka-stress --partitions 3 --replication-factor 1 --if-not-exists --zookeeper zookeeper:2181
+```
+
 
 # Schema Registry
 
@@ -48,3 +63,5 @@ Tests finished in 1.406677516s. Producer mean time 10663.42/s
 Sent 15000 messages to topic brabo with 0 errors
 Tests finished in 885.728755ms. Producer mean time 16935.21/s
 ```
+
+[!LeastBytes]()

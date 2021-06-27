@@ -3,7 +3,7 @@ version: "3"
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:5.4.0
+    image: confluentinc/cp-zookeeper:5.2.5
     hostname: zookeeper
     container_name: zookeeper
     ports:
@@ -34,13 +34,6 @@ services:
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
       CONFLUENT_METRICS_ENABLE: "true"
       CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
-
-  kafka-tools:
-    image: confluentinc/cp-kafka:5.4.0
-    hostname: kafka-tools
-    container_name: kafka-tools
-    command: ["tail", "-f", "/dev/null"]
-    network_mode: "host"
 
   schema-registry:
     image: confluentinc/cp-schema-registry:5.4.0
