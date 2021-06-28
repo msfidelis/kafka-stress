@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"kafka-stress/pkg/string_generator"
+
 	guuid "github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -21,6 +23,7 @@ func main() {
 	bootstrapServers := flag.String("bootstrap-servers", "0.0.0.0:9092", "Kafka Bootstrap Servers Broker Lists")
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
 	schemaRegistryURL := flag.String("schema-registry", "0.0.0.0:8081", "Schema Registry URL")
+	size := flag.Int("size", 62, "Message size in bytes")
 	schema := flag.String("schema", "", "Schema")
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
 	consumers := flag.Int("consumers", 1, "Number of consumers will be used in topic")
@@ -29,12 +32,12 @@ func main() {
 	flag.Parse()
 
 	if *createTopic {
-		createTopicAfterTest(*topic, *zookeeperServers)
+		createTopicBeforeTest(*topic, *zookeeperServers)
 	}
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events, *schemaRegistryURL, *schema)
+		produce(*bootstrapServers, *topic, *events, *size, *schemaRegistryURL, *schema)
 		break
 	case "consumer":
 
@@ -50,17 +53,18 @@ func main() {
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int, schemaRegistryURL string, schema string) {
-	producer := getProducer(bootstrapServers, topic)
-
-	defer producer.Close()
+func produce(bootstrapServers string, topic string, events int, size int, schemaRegistryURL string, schema string) {
 
 	var wg sync.WaitGroup
-
 	var executions uint64
 	var errors uint64
 
+	producer := getProducer(bootstrapServers, topic)
+	defer producer.Close()
+
 	start := time.Now()
+
+	message := string_generator.RandStringBytes(size)
 
 	for i := 0; i < events; i++ {
 		wg.Add(1)
@@ -69,7 +73,7 @@ func produce(bootstrapServers string, topic string, events int, schemaRegistryUR
 
 			msg := kafka.Message{
 				Key:   []byte(guuid.New().String()),
-				Value: []byte(guuid.New().String()),
+				Value: []byte(message),
 			}
 
 			err := producer.WriteMessages(context.Background(), msg)
@@ -106,7 +110,7 @@ func consume(bootstrapServers, topic, consumerGroup string, consumerID int) {
 	fmt.Println("Consumer", consumerID)
 }
 
-func createTopicAfterTest(topic string, zookeeper string) {
+func createTopicBeforeTest(topic string, zookeeper string) {
 	fmt.Printf("Creating topic %s\n", topic)
 }
 
@@ -125,10 +129,10 @@ func getProducer(bootstrapServers, topic string) *kafka.Writer {
 	}
 
 	return kafka.NewWriter(kafka.WriterConfig{
-		Brokers: strings.Split(bootstrapServers, ","),
-		Topic:   topic,
-		// Balancer: &kafka.LeastBytes{},
-		Balancer:     &kafka.Hash{},
+		Brokers:  strings.Split(bootstrapServers, ","),
+		Topic:    topic,
+		Balancer: &kafka.LeastBytes{},
+		// Balancer:     &kafka.Hash{},
 		Dialer:       dialer,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
