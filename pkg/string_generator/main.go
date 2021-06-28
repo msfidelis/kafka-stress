@@ -1,4 +1,4 @@
-package string_generator
+package stringgenerator
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+// RandStringBytes Gerenerate random string bytes size
 func RandStringBytes(n int) string {
 	b := make([]byte, n)
 	for i := range b {

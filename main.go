@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"kafka-stress/pkg/string_generator"
+	"kafka-stress/pkg/stringgenerator"
 
 	guuid "github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
@@ -64,7 +64,7 @@ func produce(bootstrapServers string, topic string, events int, size int, schema
 
 	start := time.Now()
 
-	message := string_generator.RandStringBytes(size)
+	message := stringgenerator.RandStringBytes(size)
 
 	for i := 0; i < events; i++ {
 		wg.Add(1)
