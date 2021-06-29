@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -19,6 +20,7 @@ import (
 func main() {
 	topic := flag.String("topic", "kafka-stress", "Kafka Stress Topics")
 	createTopic := flag.Bool("create-topic", false, "Auto Create Topic?")
+	ssl := flag.Bool("ssl-enabled", false, "SSL Mode")
 	testMode := flag.String("test-mode", "producer", "Test Type; Ex producer;consumer. Default: producer")
 	bootstrapServers := flag.String("bootstrap-servers", "0.0.0.0:9092", "Kafka Bootstrap Servers Broker Lists")
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
@@ -37,29 +39,30 @@ func main() {
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events, *size, *schemaRegistryURL, *schema)
+		produce(*bootstrapServers, *topic, *events, *size, *schemaRegistryURL, *schema, *ssl)
 		break
 	case "consumer":
 
 		for i := 0; i < *consumers; i++ {
 			var consumerID = i + 1
-			go consume(*bootstrapServers, *topic, *consumerGroup, consumerID)
+			go consume(*bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
 		}
 
-		consume(*bootstrapServers, *topic, *consumerGroup, *consumers)
+		consume(*bootstrapServers, *topic, *consumerGroup, 0, *ssl)
+
 		break
 	default:
 		return
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int, size int, schemaRegistryURL string, schema string) {
+func produce(bootstrapServers string, topic string, events int, size int, schemaRegistryURL string, schema string, ssl bool) {
 
 	var wg sync.WaitGroup
 	var executions uint64
 	var errors uint64
 
-	producer := getProducer(bootstrapServers, topic)
+	producer := getProducer(bootstrapServers, topic, ssl)
 	defer producer.Close()
 
 	start := time.Now()
@@ -96,8 +99,8 @@ func produce(bootstrapServers string, topic string, events int, size int, schema
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(bootstrapServers, topic, consumerGroup string, consumerID int) {
-	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID)
+func consume(bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
+	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
 
 	for {
 		m, err := consumer.ReadMessage(context.Background())
@@ -114,7 +117,9 @@ func createTopicBeforeTest(topic string, zookeeper string) {
 	fmt.Printf("Creating topic %s\n", topic)
 }
 
-func getProducer(bootstrapServers, topic string) *kafka.Writer {
+func getProducer(bootstrapServers, topic string, ssl bool) *kafka.Writer {
+
+	var dialer kafka.Dialer
 
 	name, err := os.Hostname()
 
@@ -122,10 +127,19 @@ func getProducer(bootstrapServers, topic string) *kafka.Writer {
 		panic(err)
 	}
 
-	dialer := &kafka.Dialer{
-		Timeout:   20 * time.Second,
-		DualStack: true,
-		ClientID:  name,
+	if ssl {
+		dialer = kafka.Dialer{
+			Timeout:   20 * time.Second,
+			DualStack: true,
+			ClientID:  name,
+			TLS:       &tls.Config{},
+		}
+	} else {
+		dialer = kafka.Dialer{
+			Timeout:   20 * time.Second,
+			DualStack: true,
+			ClientID:  name,
+		}
 	}
 
 	return kafka.NewWriter(kafka.WriterConfig{
@@ -133,27 +147,38 @@ func getProducer(bootstrapServers, topic string) *kafka.Writer {
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 		// Balancer:     &kafka.Hash{},
-		Dialer:       dialer,
+		Dialer:       &dialer,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
 	})
 
 }
 
-func getConsumer(bootstrapServers, topic, consumerGroup string, consumer int) *kafka.Reader {
+func getConsumer(bootstrapServers, topic, consumerGroup string, consumer int, ssl bool) *kafka.Reader {
 
 	// @TODO Separar um dialer
-	dialer := &kafka.Dialer{
-		Timeout:   10 * time.Second,
-		DualStack: true,
-		ClientID:  fmt.Sprintf("%v-%v", consumerGroup, consumer),
+	var dialer kafka.Dialer
+
+	if ssl {
+		dialer = kafka.Dialer{
+			Timeout:   20 * time.Second,
+			DualStack: true,
+			ClientID:  fmt.Sprintf("%v-%v", consumerGroup, consumer),
+			TLS:       &tls.Config{},
+		}
+	} else {
+		dialer = kafka.Dialer{
+			Timeout:   20 * time.Second,
+			DualStack: true,
+			ClientID:  fmt.Sprintf("%v-%v", consumerGroup, consumer),
+		}
 	}
 
 	return kafka.NewReader(kafka.ReaderConfig{
 		Brokers: strings.Split(bootstrapServers, ","),
 		Topic:   topic,
 		GroupID: consumerGroup,
-		Dialer:  dialer,
+		Dialer:  &dialer,
 	})
 
 }
