@@ -2,15 +2,14 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"flag"
 	"fmt"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"kafka-stress/pkg/clients"
 	"kafka-stress/pkg/stringgenerator"
 
 	guuid "github.com/google/uuid"
@@ -43,15 +42,7 @@ func main() {
 		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *schemaRegistryURL, *schema, *ssl)
 		break
 	case "consumer":
-		var wg sync.WaitGroup
-		var counter uint64
-		for i := 0; i < *consumers; i++ {
-			wg.Add(1)
-			var consumerID = i + 1
-			go consume(&wg, counter, *bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
-		}
-		wg.Wait()
-		break
+		consume(*bootstrapServers, *topic, *consumerGroup, *consumers, *ssl)
 	default:
 		return
 	}
@@ -63,33 +54,31 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 	var executions uint64
 	var errors uint64
 
-	producer := getProducer(bootstrapServers, topic, batchSize, ssl)
+	producer := clients.GetProducer(bootstrapServers, topic, batchSize, ssl)
 	defer producer.Close()
 
 	start := time.Now()
-
 	message := stringgenerator.RandStringBytes(size)
 
 	for i := 0; i < events; i++ {
 		wg.Add(1)
 
 		go func() {
-
 			msg := kafka.Message{
 				Key:   []byte(guuid.New().String()),
 				Value: []byte(message),
 			}
 
 			err := producer.WriteMessages(context.Background(), msg)
-
 			if err != nil {
-				fmt.Println(err)
+				// fmt.Println(err)
 				atomic.AddUint64(&errors, 1)
 			} else {
 				atomic.AddUint64(&executions, 1)
 			}
 
-			if (executions % 1000) == 0 {
+			var multiple = executions % 1000
+			if multiple == 0 && executions != 0 {
 				fmt.Printf("Sent %v messages to topic %s with %v errors \n", executions, topic, errors)
 			}
 
@@ -101,93 +90,44 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 	elapsed := time.Since(start)
 	meanEventsSent := float64(executions) / elapsed.Seconds()
 
-	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
+	fmt.Printf("Tests finished in %v. Produce %v messages with mean time %.2f/s \n", elapsed, executions, meanEventsSent)
 }
 
-func consume(wg *sync.WaitGroup, counter uint64, bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
-	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
-	consumerName := fmt.Sprintf("%v-%v", consumerGroup, consumerID)
-	fmt.Printf("[Consumer %v] Starting consumer\n", consumerName)
-	for {
-		m, err := consumer.ReadMessage(context.Background())
-		if err != nil {
-			break
-		}
-		atomic.AddUint64(&counter, 1)
-		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %v\n", consumerName, consumerGroup, m.Topic, m.Partition, m.Offset, counter)
+func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl bool) {
+
+	var wg sync.WaitGroup
+	var counter uint64
+
+	for i := 0; i < consumers; i++ {
+		wg.Add(1)
+		var consumerID = i + 1
+		consumer := clients.GetConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
+		consumerName := fmt.Sprintf("%v-%v", consumerGroup, consumerID)
+
+		fmt.Printf("[Consumer] Starting consumer %v\n", consumerName)
+
+		go func() {
+			for {
+				m, err := consumer.ReadMessage(context.Background())
+				if err != nil {
+					wg.Done()
+					break
+				}
+
+				atomic.AddUint64(&counter, 1)
+
+				var multiple = counter % 100
+				if multiple == 0 && counter != 0 {
+					fmt.Printf("[Consumer] %v Messages retrived from topic %v by consumer group %s \n", counter, m.Topic, consumerGroup)
+				}
+			}
+			wg.Done()
+		}()
+
 	}
-	fmt.Printf("[Consumer %v] Finishing Worker\n", consumerName)
-	wg.Done()
+	wg.Wait()
 }
 
 func createTopicBeforeTest(topic string, zookeeper string) {
 	fmt.Printf("Creating topic %s\n", topic)
-}
-
-func getProducer(bootstrapServers string, topic string, batchSize int, ssl bool) *kafka.Writer {
-
-	var dialer kafka.Dialer
-
-	name, err := os.Hostname()
-
-	if err != nil {
-		panic(err)
-	}
-
-	if ssl {
-		dialer = kafka.Dialer{
-			Timeout:   20 * time.Second,
-			DualStack: true,
-			ClientID:  name,
-			TLS:       &tls.Config{},
-		}
-	} else {
-		dialer = kafka.Dialer{
-			Timeout:   20 * time.Second,
-			DualStack: true,
-			ClientID:  name,
-		}
-	}
-
-	return kafka.NewWriter(kafka.WriterConfig{
-		Brokers:      strings.Split(bootstrapServers, ","),
-		Topic:        topic,
-		Balancer:     &kafka.LeastBytes{},
-		BatchSize:    batchSize,
-		BatchTimeout: 2 * time.Second,
-		// Balancer:     &kafka.Hash{},
-		Dialer:       &dialer,
-		WriteTimeout: 10 * time.Second,
-		ReadTimeout:  10 * time.Second,
-	})
-
-}
-
-func getConsumer(bootstrapServers, topic, consumerGroup string, consumer int, ssl bool) *kafka.Reader {
-
-	// @TODO Separar um dialer
-	var dialer kafka.Dialer
-
-	if ssl {
-		dialer = kafka.Dialer{
-			Timeout:   20 * time.Second,
-			DualStack: true,
-			ClientID:  fmt.Sprintf("%v-%v", consumerGroup, consumer),
-			TLS:       &tls.Config{},
-		}
-	} else {
-		dialer = kafka.Dialer{
-			Timeout:   20 * time.Second,
-			DualStack: true,
-			ClientID:  fmt.Sprintf("%v-%v", consumerGroup, consumer),
-		}
-	}
-
-	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: strings.Split(bootstrapServers, ","),
-		Topic:   topic,
-		GroupID: consumerGroup,
-		Dialer:  &dialer,
-	})
-
 }
