@@ -26,6 +26,7 @@ func main() {
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
 	schemaRegistryURL := flag.String("schema-registry", "0.0.0.0:8081", "Schema Registry URL")
 	size := flag.Int("size", 62, "Message size in bytes")
+	batchSize := flag.Int("batch-size", 0, "Batch size for producer mode")
 	schema := flag.String("schema", "", "Schema")
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
 	consumers := flag.Int("consumers", 1, "Number of consumers will be used in topic")
@@ -39,7 +40,7 @@ func main() {
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events, *size, *schemaRegistryURL, *schema, *ssl)
+		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *schemaRegistryURL, *schema, *ssl)
 		break
 	case "consumer":
 
@@ -56,13 +57,13 @@ func main() {
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int, size int, schemaRegistryURL string, schema string, ssl bool) {
+func produce(bootstrapServers string, topic string, events int, size int, batchSize int, schemaRegistryURL string, schema string, ssl bool) {
 
 	var wg sync.WaitGroup
 	var executions uint64
 	var errors uint64
 
-	producer := getProducer(bootstrapServers, topic, ssl)
+	producer := getProducer(bootstrapServers, topic, batchSize, ssl)
 	defer producer.Close()
 
 	start := time.Now()
@@ -117,7 +118,7 @@ func createTopicBeforeTest(topic string, zookeeper string) {
 	fmt.Printf("Creating topic %s\n", topic)
 }
 
-func getProducer(bootstrapServers, topic string, ssl bool) *kafka.Writer {
+func getProducer(bootstrapServers string, topic string, batchSize int, ssl bool) *kafka.Writer {
 
 	var dialer kafka.Dialer
 
@@ -143,9 +144,11 @@ func getProducer(bootstrapServers, topic string, ssl bool) *kafka.Writer {
 	}
 
 	return kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  strings.Split(bootstrapServers, ","),
-		Topic:    topic,
-		Balancer: &kafka.LeastBytes{},
+		Brokers:      strings.Split(bootstrapServers, ","),
+		Topic:        topic,
+		Balancer:     &kafka.LeastBytes{},
+		BatchSize:    batchSize,
+		BatchTimeout: 2 * time.Second,
 		// Balancer:     &kafka.Hash{},
 		Dialer:       &dialer,
 		WriteTimeout: 10 * time.Second,
