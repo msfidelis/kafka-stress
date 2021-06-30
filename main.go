@@ -104,7 +104,7 @@ func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl b
 		consumer := clients.GetConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
 		consumerName := fmt.Sprintf("%v-%v", consumerGroup, consumerID)
 
-		fmt.Printf("[Consumer %v] Starting consumer\n", consumerName)
+		fmt.Printf("[Consumer] Starting consumer %v\n", consumerName)
 
 		go func() {
 			for {
@@ -113,15 +113,14 @@ func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl b
 					wg.Done()
 					break
 				}
+
 				atomic.AddUint64(&counter, 1)
 
 				var multiple = counter % 100
 				if multiple == 0 && counter != 0 {
-					fmt.Printf("[Consumer] %v Messages retrived from topic %v by consumer group %s\n", counter, m.Topic, consumerGroup)
+					fmt.Printf("[Consumer] %v Messages retrived from topic %v by consumer group %s \n", counter, m.Topic, consumerGroup)
 				}
-
 			}
-
 			wg.Done()
 		}()
 
