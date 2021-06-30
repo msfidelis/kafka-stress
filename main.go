@@ -44,10 +44,11 @@ func main() {
 		break
 	case "consumer":
 		var wg sync.WaitGroup
+		var counter uint64
 		for i := 0; i < *consumers; i++ {
 			wg.Add(1)
 			var consumerID = i + 1
-			go consume(&wg, *bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
+			go consume(&wg, counter, *bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
 		}
 		wg.Wait()
 		break
@@ -103,16 +104,17 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(wg *sync.WaitGroup, bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
+func consume(wg *sync.WaitGroup, counter uint64, bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
 	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
 	consumerName := fmt.Sprintf("%v-%v", consumerGroup, consumerID)
-	fmt.Printf("[Consumer %v] Starting consumer", consumerName)
+	fmt.Printf("[Consumer %v] Starting consumer\n", consumerName)
 	for {
 		m, err := consumer.ReadMessage(context.Background())
 		if err != nil {
 			break
 		}
-		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerName, consumerGroup, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		atomic.AddUint64(&counter, 1)
+		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %v\n", consumerName, consumerGroup, m.Topic, m.Partition, m.Offset, counter)
 	}
 	fmt.Printf("[Consumer %v] Finishing Worker\n", consumerName)
 	wg.Done()
