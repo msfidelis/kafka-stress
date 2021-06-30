@@ -26,6 +26,7 @@ func main() {
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
 	schemaRegistryURL := flag.String("schema-registry", "0.0.0.0:8081", "Schema Registry URL")
 	size := flag.Int("size", 62, "Message size in bytes")
+	batchSize := flag.Int("batch-size", 0, "Batch size for producer mode")
 	schema := flag.String("schema", "", "Schema")
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
 	consumers := flag.Int("consumers", 1, "Number of consumers will be used in topic")
@@ -39,30 +40,30 @@ func main() {
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events, *size, *schemaRegistryURL, *schema, *ssl)
+		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *schemaRegistryURL, *schema, *ssl)
 		break
 	case "consumer":
-
+		var wg sync.WaitGroup
+		var counter uint64
 		for i := 0; i < *consumers; i++ {
+			wg.Add(1)
 			var consumerID = i + 1
-			go consume(*bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
+			go consume(&wg, counter, *bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
 		}
-
-		consume(*bootstrapServers, *topic, *consumerGroup, 0, *ssl)
-
+		wg.Wait()
 		break
 	default:
 		return
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int, size int, schemaRegistryURL string, schema string, ssl bool) {
+func produce(bootstrapServers string, topic string, events int, size int, batchSize int, schemaRegistryURL string, schema string, ssl bool) {
 
 	var wg sync.WaitGroup
 	var executions uint64
 	var errors uint64
 
-	producer := getProducer(bootstrapServers, topic, ssl)
+	producer := getProducer(bootstrapServers, topic, batchSize, ssl)
 	defer producer.Close()
 
 	start := time.Now()
@@ -88,6 +89,10 @@ func produce(bootstrapServers string, topic string, events int, size int, schema
 				atomic.AddUint64(&executions, 1)
 			}
 
+			if (executions % 1000) == 0 {
+				fmt.Printf("Sent %v messages to topic %s with %v errors \n", executions, topic, errors)
+			}
+
 			wg.Done()
 		}()
 	}
@@ -95,29 +100,31 @@ func produce(bootstrapServers string, topic string, events int, size int, schema
 	wg.Wait()
 	elapsed := time.Since(start)
 	meanEventsSent := float64(executions) / elapsed.Seconds()
-	fmt.Printf("Sent %v messages to topic %s with %v errors \n", executions, topic, errors)
+
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
+func consume(wg *sync.WaitGroup, counter uint64, bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
 	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
-
+	consumerName := fmt.Sprintf("%v-%v", consumerGroup, consumerID)
+	fmt.Printf("[Consumer %v] Starting consumer\n", consumerName)
 	for {
 		m, err := consumer.ReadMessage(context.Background())
 		if err != nil {
 			break
 		}
-		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerID, consumerGroup, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		atomic.AddUint64(&counter, 1)
+		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %v\n", consumerName, consumerGroup, m.Topic, m.Partition, m.Offset, counter)
 	}
-
-	fmt.Println("Consumer", consumerID)
+	fmt.Printf("[Consumer %v] Finishing Worker\n", consumerName)
+	wg.Done()
 }
 
 func createTopicBeforeTest(topic string, zookeeper string) {
 	fmt.Printf("Creating topic %s\n", topic)
 }
 
-func getProducer(bootstrapServers, topic string, ssl bool) *kafka.Writer {
+func getProducer(bootstrapServers string, topic string, batchSize int, ssl bool) *kafka.Writer {
 
 	var dialer kafka.Dialer
 
@@ -143,9 +150,11 @@ func getProducer(bootstrapServers, topic string, ssl bool) *kafka.Writer {
 	}
 
 	return kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  strings.Split(bootstrapServers, ","),
-		Topic:    topic,
-		Balancer: &kafka.LeastBytes{},
+		Brokers:      strings.Split(bootstrapServers, ","),
+		Topic:        topic,
+		Balancer:     &kafka.LeastBytes{},
+		BatchSize:    batchSize,
+		BatchTimeout: 2 * time.Second,
 		// Balancer:     &kafka.Hash{},
 		Dialer:       &dialer,
 		WriteTimeout: 10 * time.Second,
