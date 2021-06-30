@@ -43,15 +43,6 @@ func main() {
 		break
 	case "consumer":
 		consume(*bootstrapServers, *topic, *consumerGroup, *consumers, *ssl)
-		// var wg sync.WaitGroup
-		// var counter uint64
-		// for i := 0; i < *consumers; i++ {
-		// 	wg.Add(1)
-		// 	var consumerID = i + 1
-		// 	go consume(&wg, counter, *bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
-		// }
-		// wg.Wait()
-		// break
 	default:
 		return
 	}
@@ -130,25 +121,7 @@ func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl b
 		}()
 
 	}
-
 	wg.Wait()
-
-	// consumer := clients.GetConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
-	// consumerName := fmt.Sprintf("%v-%v", consumerGroup, consumerID)
-
-	// fmt.Printf("[Consumer %v] Starting consumer\n", consumerName)
-
-	// for {
-	// 	m, err := consumer.ReadMessage(context.Background())
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	atomic.AddUint64(&counter, 1)
-	// 	fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %v\n", consumerName, consumerGroup, m.Topic, m.Partition, m.Offset, counter)
-	// }
-
-	// fmt.Printf("[Consumer %v] Finishing Worker\n", consumerName)
-	// wg.Done()
 }
 
 func createTopicBeforeTest(topic string, zookeeper string) {
