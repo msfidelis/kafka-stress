@@ -43,14 +43,13 @@ func main() {
 		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *schemaRegistryURL, *schema, *ssl)
 		break
 	case "consumer":
-
+		var wg sync.WaitGroup
 		for i := 0; i < *consumers; i++ {
+			wg.Add(1)
 			var consumerID = i + 1
-			go consume(*bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
+			go consume(&wg, *bootstrapServers, *topic, *consumerGroup, consumerID, *ssl)
 		}
-
-		consume(*bootstrapServers, *topic, *consumerGroup, 0, *ssl)
-
+		wg.Wait()
 		break
 	default:
 		return
@@ -89,6 +88,10 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 				atomic.AddUint64(&executions, 1)
 			}
 
+			if (executions % 1000) == 0 {
+				fmt.Printf("Sent %v messages to topic %s with %v errors \n", executions, topic, errors)
+			}
+
 			wg.Done()
 		}()
 	}
@@ -96,22 +99,23 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 	wg.Wait()
 	elapsed := time.Since(start)
 	meanEventsSent := float64(executions) / elapsed.Seconds()
-	fmt.Printf("Sent %v messages to topic %s with %v errors \n", executions, topic, errors)
+
 	fmt.Printf("Tests finished in %v. Producer mean time %.2f/s \n", elapsed, meanEventsSent)
 }
 
-func consume(bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
+func consume(wg *sync.WaitGroup, bootstrapServers, topic, consumerGroup string, consumerID int, ssl bool) {
 	consumer := getConsumer(bootstrapServers, topic, consumerGroup, consumerID, ssl)
-
+	consumerName := fmt.Sprintf("%v-%v", consumerGroup, consumerID)
+	fmt.Printf("[Consumer %v] Starting consumer", consumerName)
 	for {
 		m, err := consumer.ReadMessage(context.Background())
 		if err != nil {
 			break
 		}
-		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerID, consumerGroup, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
+		fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %s = %s\n", consumerName, consumerGroup, m.Topic, m.Partition, m.Offset, string(m.Key), string(m.Value))
 	}
-
-	fmt.Println("Consumer", consumerID)
+	fmt.Printf("[Consumer %v] Finishing Worker\n", consumerName)
+	wg.Done()
 }
 
 func createTopicBeforeTest(topic string, zookeeper string) {
