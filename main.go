@@ -114,7 +114,12 @@ func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl b
 					break
 				}
 				atomic.AddUint64(&counter, 1)
-				fmt.Printf("[Consumer %v] Message from consumer group %s at topic/partition/offset %v/%v/%v: %v\n", consumerName, consumerGroup, m.Topic, m.Partition, m.Offset, counter)
+
+				var multiple = counter % 100
+				if multiple == 0 && counter != 0 {
+					fmt.Printf("[Consumer] %v Messages retrived from topic %v by consumer group %s\n", counter, m.Topic, consumerGroup)
+				}
+
 			}
 
 			wg.Done()
