@@ -1,4 +1,56 @@
 
+# Installation 
+
+### Docker 
+
+```bash
+docker pull fidelissauro/kafka-stress:latest
+```
+
+```bash
+docker run --network host -it fidelissauro/kafka-stress:latest --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --consumers 6
+```
+
+### MacOS amd64
+
+```bash
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.5/kafka-stress_0.0.5_darwin_amd64 -O kafka-stress 
+mv kafka-stress /usr/local/bin 
+chmod +x /usr/local/bin/kafka-stress
+```
+
+### Linux amd64 
+
+```bash
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.5/kafka-stress_0.0.5_linux_amd64 -O kafka-stress 
+mv kafka-stress /usr/local/bin 
+chmod +x /usr/local/bin/kafka-stress
+```
+
+### Linux arm64 
+
+```bash
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.5/kafka-stress_0.0.5_linux_arm64 -O kafka-stress 
+mv kafka-stress /usr/local/bin 
+chmod +x /usr/local/bin/kafka-stress
+```
+
+### Freebsd amd64 
+
+```bash
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.5/kafka-stress_0.0.5_freebsd_amd64 -O kafka-stress 
+mv kafka-stress /usr/local/bin 
+chmod +x /usr/local/bin/kafka-stress
+```
+
+### Freebsd arm64 
+
+```bash
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.5/kafka-stress_0.0.5_freebsd_arm64 -O kafka-stress 
+mv kafka-stress /usr/local/bin 
+chmod +x /usr/local/bin/kafka-stress
+```
+
 # v0 Usage 
 
 ```bash
