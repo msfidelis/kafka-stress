@@ -25,6 +25,7 @@ func main() {
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
 	schemaRegistryURL := flag.String("schema-registry", "0.0.0.0:8081", "Schema Registry URL")
 	size := flag.Int("size", 62, "Message size in bytes")
+	acks := flag.Int("ack", 1, "Required ACKs to produce messages")
 	batchSize := flag.Int("batch-size", 0, "Batch size for producer mode")
 	schema := flag.String("schema", "", "Schema")
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
@@ -39,7 +40,7 @@ func main() {
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *schemaRegistryURL, *schema, *ssl)
+		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *acks, *schemaRegistryURL, *schema, *ssl)
 		break
 	case "consumer":
 		consume(*bootstrapServers, *topic, *consumerGroup, *consumers, *ssl)
@@ -48,13 +49,13 @@ func main() {
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int, size int, batchSize int, schemaRegistryURL string, schema string, ssl bool) {
+func produce(bootstrapServers string, topic string, events int, size int, batchSize int, acks int, schemaRegistryURL string, schema string, ssl bool) {
 
 	var wg sync.WaitGroup
 	var executions uint64
 	var errors uint64
 
-	producer := clients.GetProducer(bootstrapServers, topic, batchSize, ssl)
+	producer := clients.GetProducer(bootstrapServers, topic, batchSize, acks, ssl)
 	defer producer.Close()
 
 	start := time.Now()

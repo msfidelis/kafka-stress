@@ -13,15 +13,18 @@ func GetConsumer(bootstrapServers, topic, consumerGroup string, consumer int, ss
 	dialer := kafkadialer.GetDialer(ssl)
 
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: strings.Split(bootstrapServers, ","),
-		Topic:   topic,
-		GroupID: consumerGroup,
-		Dialer:  &dialer,
+		Brokers:        strings.Split(bootstrapServers, ","),
+		Topic:          topic,
+		GroupID:        consumerGroup,
+		Dialer:         &dialer,
+		MinBytes:       10e3, // 10KB
+		MaxBytes:       10e6, // 10MB
+		CommitInterval: time.Second,
 	})
 }
 
 // GetProducer return a Kafka Producer Client
-func GetProducer(bootstrapServers string, topic string, batchSize int, ssl bool) *kafka.Writer {
+func GetProducer(bootstrapServers string, topic string, batchSize int, acks int, ssl bool) *kafka.Writer {
 
 	dialer := kafkadialer.GetDialer(ssl)
 
@@ -32,6 +35,7 @@ func GetProducer(bootstrapServers string, topic string, batchSize int, ssl bool)
 		BatchSize:    batchSize,
 		BatchTimeout: 2 * time.Second,
 		// Balancer:     &kafka.Hash{},
+		RequiredAcks: acks,
 		Dialer:       &dialer,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
