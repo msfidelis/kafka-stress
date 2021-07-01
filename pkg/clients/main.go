@@ -21,7 +21,7 @@ func GetConsumer(bootstrapServers, topic, consumerGroup string, consumer int, ss
 }
 
 // GetProducer return a Kafka Producer Client
-func GetProducer(bootstrapServers string, topic string, batchSize int, ssl bool) *kafka.Writer {
+func GetProducer(bootstrapServers string, topic string, batchSize int, acks int, ssl bool) *kafka.Writer {
 
 	dialer := kafkadialer.GetDialer(ssl)
 
@@ -32,6 +32,7 @@ func GetProducer(bootstrapServers string, topic string, batchSize int, ssl bool)
 		BatchSize:    batchSize,
 		BatchTimeout: 2 * time.Second,
 		// Balancer:     &kafka.Hash{},
+		RequiredAcks: acks,
 		Dialer:       &dialer,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
