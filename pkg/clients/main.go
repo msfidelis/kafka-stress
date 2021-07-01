@@ -13,10 +13,13 @@ func GetConsumer(bootstrapServers, topic, consumerGroup string, consumer int, ss
 	dialer := kafkadialer.GetDialer(ssl)
 
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: strings.Split(bootstrapServers, ","),
-		Topic:   topic,
-		GroupID: consumerGroup,
-		Dialer:  &dialer,
+		Brokers:        strings.Split(bootstrapServers, ","),
+		Topic:          topic,
+		GroupID:        consumerGroup,
+		Dialer:         &dialer,
+		MinBytes:       10e3, // 10KB
+		MaxBytes:       10e6, // 10MB
+		CommitInterval: time.Second,
 	})
 }
 

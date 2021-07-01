@@ -25,7 +25,7 @@ func main() {
 	zookeeperServers := flag.String("zookeeper-servers", "0.0.0.0:2181", "Zookeeper Connection String")
 	schemaRegistryURL := flag.String("schema-registry", "0.0.0.0:8081", "Schema Registry URL")
 	size := flag.Int("size", 62, "Message size in bytes")
-	acks := flag.Int("ack", 1, "Required ACK's to produce messages")
+	acks := flag.Int("ack", 1, "Required ACKs to produce messages")
 	batchSize := flag.Int("batch-size", 0, "Batch size for producer mode")
 	schema := flag.String("schema", "", "Schema")
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
