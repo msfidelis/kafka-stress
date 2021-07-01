@@ -1,6 +1,16 @@
 
 # Installation 
 
+### Docker 
+
+```bash
+docker pull fidelissauro/kafka-stress:latest
+```
+
+```bash
+docker run --network host -it fidelissauro/kafka-stress:latest --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --consumers 6
+```
+
 ### MacOS amd64
 
 ```bash
