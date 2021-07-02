@@ -1,3 +1,22 @@
+# Kafka Stress - Stress Test Tool for Kafka Clusters, Producers and Consumers Tunning
+
+<p>
+  <a href="README.md" target="_blank">
+    <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" />
+  </a>
+  <a href="LICENSE" target="_blank">
+    <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" />
+  </a>
+  <a href="/" target="_blank">
+    <img alt="Build CI" src="https://github.com/msfidelis/kafka-stress/workflows/kafka-stress%20ci/badge.svg" />
+  </a>  
+  <a href="/" target="_blank">
+    <img alt="Release" src="https://github.com/msfidelis/kafka-stress/workflows/release%20packages/badge.svg" />
+  </a>
+  <a href="https://twitter.com/fidelissauro" target="_blank">
+    <img alt="Twitter: fidelissauro" src="https://img.shields.io/twitter/follow/fidelissauro.svg?style=social" />
+  </a>  
+</p>
 
 # Installation 
 
