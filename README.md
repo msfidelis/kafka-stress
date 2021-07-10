@@ -18,6 +18,10 @@
   </a>  
 </p>
 
+# Introduction
+
+> Kafka Stress is a simple CLI Tool to produce and consume events on Kafka topics in high throughput to tests and validate brokers, topics, partitions and consumers performances. 
+
 # Installation 
 
 ### Docker 
