@@ -30,6 +30,7 @@ type fake struct {
 	PaymentMethod      string  `faker:"oneof: cc, paypal, check, money order"`
 }
 
+// RandJsonPayload Gerenerate random json with fake data
 func RandJsonPayload() string {
 
 	a := fake{}
