@@ -11,6 +11,7 @@ import (
 
 	"kafka-stress/pkg/clients"
 	"kafka-stress/pkg/stringgenerator"
+	"kafka-stress/pkg/fakejson"
 
 	guuid "github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
@@ -31,6 +32,7 @@ func main() {
 	events := flag.Int("events", 10000, "Numer of events will be created in topic")
 	consumers := flag.Int("consumers", 1, "Number of consumers will be used in topic")
 	consumerGroup := flag.String("consumer-group", "kafka-stress", "Consumer group name")
+	format :=  flag.String("format", "string", "Events Format; ex string,json,avro")
 
 	flag.Parse()
 
@@ -40,7 +42,7 @@ func main() {
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *acks, *schemaRegistryURL, *schema, *ssl)
+		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *acks, *schemaRegistryURL, *schema, *ssl, *format)
 		break
 	case "consumer":
 		consume(*bootstrapServers, *topic, *consumerGroup, *consumers, *ssl)
@@ -49,20 +51,31 @@ func main() {
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int, size int, batchSize int, acks int, schemaRegistryURL string, schema string, ssl bool) {
+func produce(bootstrapServers string, topic string, events int, size int, batchSize int, acks int, schemaRegistryURL string, schema string, ssl bool, format string) {
 
 	var wg sync.WaitGroup
 	var executions uint64
 	var errors uint64
+	var message string
 
 	producer := clients.GetProducer(bootstrapServers, topic, batchSize, acks, ssl)
 	defer producer.Close()
 
 	start := time.Now()
-	message := stringgenerator.RandStringBytes(size)
 
 	for i := 0; i < events; i++ {
 		wg.Add(1)
+
+		switch format {
+		case "string":
+			message = stringgenerator.RandStringBytes(size)
+			break;
+		case "json":
+			message = fakejson.RandJsonPayload()
+			break; 
+		default:
+			message = stringgenerator.RandStringBytes(size)
+		}
 
 		go func() {
 			msg := kafka.Message{
@@ -72,7 +85,6 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 
 			err := producer.WriteMessages(context.Background(), msg)
 			if err != nil {
-				// fmt.Println(err)
 				atomic.AddUint64(&errors, 1)
 			} else {
 				atomic.AddUint64(&executions, 1)

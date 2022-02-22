@@ -145,7 +145,7 @@ kafka-stress --bootstrap-servers 0.0.0.0:9092 --events 10000 --topic kafka-stres
 
 ### Customize consumer-group name
 
-Use `--ssl` to enable ssl authentication. 
+Use `--consumer-group` to change customer group name used by workers. 
 
 ```bash
 kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --consumer-group custom-consumer-group
@@ -155,10 +155,10 @@ kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode c
 
 ### SSL 
 
-Use `--ssl` to enable ssl authentication. 
+Use `--ssl-enabled` to enable ssl authentication. 
 
 ```bash
-kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --ssl
+kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --ssl-enabled
 ```
 
 ## Roadmap 
