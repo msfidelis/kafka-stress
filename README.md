@@ -129,6 +129,15 @@ Use `--ack` parameter to customize ack's quorum
 kafka-stress --bootstrap-servers 0.0.0.0:9092 --events 20000 --topic tunning-3 --test-mode producer --ack 1
 ```
 
+### Producer Format
+
+You can produce random data in `string` and `json` format using `--format` flag
+
+```bash
+kafka-stress --bootstrap-servers 0.0.0.0:9092 --events 20000 --topic tunning-3 --test-mode producer --ack 1 --format json
+```
+
+
 ## Consumer
 
 kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --consumers 6
