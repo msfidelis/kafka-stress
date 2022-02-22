@@ -34,6 +34,7 @@ func main() {
 	consumerGroup := flag.String("consumer-group", "kafka-stress", "Consumer group name")
 	format :=  flag.String("format", "string", "Events Format; ex string,json,avro")
 
+
 	flag.Parse()
 
 	if *createTopic {
@@ -71,7 +72,7 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 			message = stringgenerator.RandStringBytes(size)
 			break;
 		case "json":
-			message = fakejson.RandJsonPayload()
+			message = fakejson.RandJSONPayload()
 			break; 
 		default:
 			message = stringgenerator.RandStringBytes(size)
