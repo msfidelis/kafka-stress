@@ -92,6 +92,8 @@ Usage of kafka-stress:
     	Auto Create Topic?
   -events int
     	Numer of events will be created in topic (default 10000)
+  -format string
+    	Events Format; ex string,json,avro (default "string")
   -schema string
     	Schema
   -schema-registry string
