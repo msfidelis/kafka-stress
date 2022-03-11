@@ -106,6 +106,8 @@ Usage of kafka-stress:
     	Test Type; Ex producer;consumer. Default: producer (default "producer")
   -topic string
     	Kafka Stress Topics (default "kafka-stress")
+  -verbose
+    	Verbose Mode; It Prints Events consumed
   -zookeeper-servers string
     	Zookeeper Connection String (default "0.0.0.0:2181")
 ```
@@ -160,6 +162,14 @@ Use `--consumer-group` to change customer group name used by workers.
 
 ```bash
 kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --consumer-group custom-consumer-group
+```
+
+### Verbose mode
+
+Use `--verbose` to print keys and events
+
+```bash
+kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode consumer --verbose
 ```
 
 ## Authentication methods 
