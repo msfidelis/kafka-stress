@@ -33,6 +33,7 @@ func main() {
 	consumers := flag.Int("consumers", 1, "Number of consumers will be used in topic")
 	consumerGroup := flag.String("consumer-group", "kafka-stress", "Consumer group name")
 	format :=  flag.String("format", "string", "Events Format; ex string,json,avro")
+	verbose := flag.Bool("verbose", false, "Verbose Mode; It Prints Events consumed")
 
 
 	flag.Parse()
@@ -46,7 +47,7 @@ func main() {
 		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *acks, *schemaRegistryURL, *schema, *ssl, *format)
 		break
 	case "consumer":
-		consume(*bootstrapServers, *topic, *consumerGroup, *consumers, *ssl)
+		consume(*bootstrapServers, *topic, *consumerGroup, *consumers, *ssl, *verbose)
 	default:
 		return
 	}
@@ -107,7 +108,7 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 	fmt.Printf("Tests finished in %v. Produce %v messages with mean time %.2f/s \n", elapsed, executions, meanEventsSent)
 }
 
-func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl bool) {
+func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl bool, verbose bool) {
 
 	var wg sync.WaitGroup
 	var counter uint64
@@ -129,6 +130,10 @@ func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl b
 				}
 
 				atomic.AddUint64(&counter, 1)
+
+				if verbose == true {
+					fmt.Printf("[Key] %s | [Value] %s\n\n\n", m.Key, m.Value)
+				}
 
 				var multiple = counter % 100
 				if multiple == 0 && counter != 0 {
