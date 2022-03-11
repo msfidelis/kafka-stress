@@ -24,21 +24,35 @@ func GetConsumer(bootstrapServers, topic, consumerGroup string, consumer int, ss
 }
 
 // GetProducer return a Kafka Producer Client
-func GetProducer(bootstrapServers string, topic string, batchSize int, acks int, ssl bool) *kafka.Writer {
+func GetProducer(bootstrapServers string, topic string, batchSize int, acks int, ssl bool, balancer string) *kafka.Writer {
 
 	dialer := kafkadialer.GetDialer(ssl)
 
-	return kafka.NewWriter(kafka.WriterConfig{
+	var config kafka.WriterConfig
+
+	config = kafka.WriterConfig{
 		Brokers:      strings.Split(bootstrapServers, ","),
 		Topic:        topic,
 		Balancer:     &kafka.LeastBytes{},
 		BatchSize:    batchSize,
 		BatchTimeout: 2 * time.Second,
-		// Balancer:     &kafka.Hash{},
 		RequiredAcks: acks,
 		Dialer:       &dialer,
 		WriteTimeout: 10 * time.Second,
 		ReadTimeout:  10 * time.Second,
-	})
+	}
+
+	switch balancer {
+	case "hash":
+		config.Balancer = &kafka.Hash{}
+	case "murmur2":
+		config.Balancer = &kafka.Murmur2Balancer{}
+	case "crc32":
+		config.Balancer = &kafka.CRC32Balancer{}				
+	default: 
+		config.Balancer = &kafka.Hash{}
+	}	
+
+	return kafka.NewWriter(config)
 
 }
