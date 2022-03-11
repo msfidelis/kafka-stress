@@ -80,6 +80,8 @@ chmod +x /usr/local/bin/kafka-stress
 Usage of kafka-stress:
   -ack int
     	Required ACKs to produce messages (default 1)
+  -balancer string
+    	Balance algorithm for producer mode; Ex: hash,murmur2,crc32 (default "hash")
   -batch-size int
     	Batch size for producer mode
   -bootstrap-servers string
@@ -141,6 +143,14 @@ You can produce random data in `string` and `json` format using `--format` flag
 kafka-stress --bootstrap-servers 0.0.0.0:9092 --events 20000 --topic tunning-3 --test-mode producer --ack 1 --format json
 ```
 
+
+### Producer Balance Algorithms
+
+You can specify some algorithms to balance producer messages like `hash`, `murmur2` and `crc21` using `--balance` flag
+
+```bash
+kafka-stress --bootstrap-servers 0.0.0.0:9092 --events 20000 --topic tunning-3 --test-mode producer --balance murmur2 --format json
+```
 
 ## Consumer
 
