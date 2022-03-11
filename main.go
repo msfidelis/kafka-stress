@@ -34,6 +34,7 @@ func main() {
 	consumerGroup := flag.String("consumer-group", "kafka-stress", "Consumer group name")
 	format :=  flag.String("format", "string", "Events Format; ex string,json,avro")
 	verbose := flag.Bool("verbose", false, "Verbose Mode; It Prints Events consumed")
+	balancer := flag.String("balancer", "hash", "Balance algorithm for producer mode; Ex: hash,murmur2,crc32")
 
 
 	flag.Parse()
@@ -44,7 +45,7 @@ func main() {
 
 	switch strings.ToLower(*testMode) {
 	case "producer":
-		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *acks, *schemaRegistryURL, *schema, *ssl, *format)
+		produce(*bootstrapServers, *topic, *events, *size, *batchSize, *acks, *schemaRegistryURL, *schema, *ssl, *format, *balancer)
 		break
 	case "consumer":
 		consume(*bootstrapServers, *topic, *consumerGroup, *consumers, *ssl, *verbose)
@@ -53,14 +54,14 @@ func main() {
 	}
 }
 
-func produce(bootstrapServers string, topic string, events int, size int, batchSize int, acks int, schemaRegistryURL string, schema string, ssl bool, format string) {
+func produce(bootstrapServers string, topic string, events int, size int, batchSize int, acks int, schemaRegistryURL string, schema string, ssl bool, format string, balancer string) {
 
 	var wg sync.WaitGroup
 	var executions uint64
 	var errors uint64
 	var message string
 
-	producer := clients.GetProducer(bootstrapServers, topic, batchSize, acks, ssl)
+	producer := clients.GetProducer(bootstrapServers, topic, batchSize, acks, ssl, balancer)
 	defer producer.Close()
 
 	start := time.Now()
@@ -105,7 +106,7 @@ func produce(bootstrapServers string, topic string, events int, size int, batchS
 	elapsed := time.Since(start)
 	meanEventsSent := float64(executions) / elapsed.Seconds()
 
-	fmt.Printf("Tests finished in %v. Produce %v messages with mean time %.2f/s \n", elapsed, executions, meanEventsSent)
+	fmt.Printf("Tests finished in %v. Produce %v messages with mean time %.2f/s using %s balance algorithm \n", elapsed, executions, meanEventsSent, balancer)
 }
 
 func consume(bootstrapServers, topic, consumerGroup string, consumers int, ssl bool, verbose bool) {
