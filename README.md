@@ -195,7 +195,6 @@ kafka-stress --bootstrap-servers 0.0.0.0:9092 --topic kafka-stress --test-mode c
 ## Roadmap 
 
 Improve reports output
-* Add execution time on reports - :check: 
 * Add retry mechanism 
 * Add message size options
 * Add test header
