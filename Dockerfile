@@ -1,4 +1,4 @@
-FROM golang:1.15 AS builder
+FROM golang:1.19 AS builder
 
 WORKDIR $GOPATH/src/kafka-stress
 
