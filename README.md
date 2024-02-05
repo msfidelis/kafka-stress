@@ -37,7 +37,15 @@ docker run --network host -it fidelissauro/kafka-stress:latest --bootstrap-serve
 ### MacOS amd64
 
 ```bash
-wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.7/kafka-stress_0.0.7_darwin_amd64 -O kafka-stress 
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.8/kafka-stress_0.0.8_darwin_amd64 -O kafka-stress 
+mv kafka-stress /usr/local/bin 
+chmod +x /usr/local/bin/kafka-stress
+```
+
+### MacOS arm64
+
+```bash
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.8/kafka-stress_0.0.8_darwin_arm64 -O kafka-stress 
 mv kafka-stress /usr/local/bin 
 chmod +x /usr/local/bin/kafka-stress
 ```
@@ -45,7 +53,7 @@ chmod +x /usr/local/bin/kafka-stress
 ### Linux amd64 
 
 ```bash
-wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.7/kafka-stress_0.0.7_linux_amd64 -O kafka-stress 
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.8/kafka-stress_0.0.8_linux_amd64 -O kafka-stress 
 mv kafka-stress /usr/local/bin 
 chmod +x /usr/local/bin/kafka-stress
 ```
@@ -53,7 +61,7 @@ chmod +x /usr/local/bin/kafka-stress
 ### Linux arm64 
 
 ```bash
-wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.7/kafka-stress_0.0.7_linux_arm64 -O kafka-stress 
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.8/kafka-stress_0.0.8_linux_arm64 -O kafka-stress 
 mv kafka-stress /usr/local/bin 
 chmod +x /usr/local/bin/kafka-stress
 ```
@@ -61,7 +69,7 @@ chmod +x /usr/local/bin/kafka-stress
 ### Freebsd amd64 
 
 ```bash
-wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.7/kafka-stress_0.0.7_freebsd_amd64 -O kafka-stress 
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.8/kafka-stress_0.0.8_freebsd_amd64 -O kafka-stress 
 mv kafka-stress /usr/local/bin 
 chmod +x /usr/local/bin/kafka-stress
 ```
@@ -69,7 +77,7 @@ chmod +x /usr/local/bin/kafka-stress
 ### Freebsd arm64 
 
 ```bash
-wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.7/kafka-stress_0.0.7_freebsd_arm64 -O kafka-stress 
+wget https://github.com/msfidelis/kafka-stress/releases/download/v0.0.8/kafka-stress_0.0.8_freebsd_arm64 -O kafka-stress 
 mv kafka-stress /usr/local/bin 
 chmod +x /usr/local/bin/kafka-stress
 ```
