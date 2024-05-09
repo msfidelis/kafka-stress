@@ -1,6 +1,6 @@
 module kafka-stress
 
-go 1.15
+go 1.22
 
 require (
 	github.com/bxcodec/faker/v3 v3.8.1
